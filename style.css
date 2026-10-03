@@ -404,3 +404,62 @@ td { font-size: 0.9rem; }
   padding: 5px 10px;
   font-size: 0.78rem;
 }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-center {
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.header-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;           /* Makes it circular (face style) */
+  object-fit: cover;
+  border: 3px solid #22c55e;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.header-logo:hover {
+  transform: scale(1.08);
+}
+
+.header-actions {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Mobile responsive */
+@media (max-width: 700px) {
+  header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .header-left,
+  .header-actions {
+    flex: none;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-logo {
+    width: 70px;
+    height: 70px;
+    margin: 8px 0;
+  }
+}
