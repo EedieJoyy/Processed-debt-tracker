@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Debt Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Employee Debt Tracker</h1>
+      <div class="header-actions">
+        <button id="themeToggle" class="btn-secondary" title="Toggle theme">🌓 Theme</button>
+        <button id="printBtn" class="btn-secondary" title="Print Receipt">🖨️ Print Receipt</button>
+      </div>
+    </header>
+<!-- Select Employee to Print Modal -->
+<div id="printSelectModal" class="modal">
+  <div class="modal-content glass">
+    <h2>Select Employee to Print</h2>
+    
+    <div class="form-group" style="margin-top: 16px;">
+      <label>Choose Employee</label>
+      <select id="printEmployeeSelect" style="width: 100%; padding: 10px; border-radius: 8px;">
+        <option value="">-- Select Employee --</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" onclick="closePrintSelectModal()">Cancel</button>
+      <button type="button" onclick="printSelectedEmployee()" style="background: #0ea5e9;">Print Receipt</button>
+    </div>
+  </div>
+</div>    
+
+    <!-- Add Debt Form -->
+    <div class="card glass">
+      <h2>Add New Debt</h2>
+      <form id="debtForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Employee Name</label>
+            <input type="text" id="employeeName" placeholder="Full name" required>
+          </div>
+          <div class="form-group">
+            <label>Total Amount (₱)</label>
+            <input type="number" id="debtAmount" placeholder="0.00" min="0.01" step="0.01" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="debtDate" required>
+          </div>
+          <div class="form-group">
+            <label>Order Slip #</label>
+            <input type="text" id="osNumber" placeholder="e.g. 30318">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Remarks / Note</label>
+          <input type="text" id="note" placeholder="Optional remarks">
+        </div>
+        <button type="submit">Add Debt</button>
+      </form>
+    </div>
+
+    <!-- Summary + Controls -->
+    <div class="card glass summary-card">
+      <div class="summary">
+        <div>
+          <span class="label">Total Outstanding</span>
+          <h3>₱<span id="totalDebt">0.00</span></h3>
+        </div>
+        <div class="stats">
+          <span class="badge pending">Pending: <span id="countPending">0</span></span>
+          <span class="badge partial">Partial: <span id="countPartial">0</span></span>
+          <span class="badge paid">Paid: <span id="countPaid">0</span></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input type="text" id="searchInput" placeholder="Search name, OS#, remarks...">
+        <select id="statusFilter">
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="partial">Partial</option>
+          <option value="paid">Paid</option>
+        </select>
+        <button id="exportBtn" class="btn-export">Export CSV</button>
+      </div>
+    </div>
+
+    <!-- Debt List -->
+    <div class="card glass">
+      <h2>Current Debts</h2>
+      <div class="table-wrapper">
+        <table id="debtTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Employee</th>
+              <th>OS #</th>
+              <th>Total</th>
+              <th>Paid</th>
+              <th>Balance</th>
+              <th>Status</th>
+              <th>Remarks</th>
+              <th class="no-print">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="debtList"></tbody>
+        </table>
+      </div>
+      <p id="emptyMessage" class="empty">No debts found.</p>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content glass">
+      <h2>Edit Debt</h2>
+      <form id="editForm">
+        <input type="hidden" id="editId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Employee Name</label>
+            <input type="text" id="editName" required>
+          </div>
+          <div class="form-group">
+            <label>Total Amount</label>
+            <input type="number" id="editOriginal" min="0.01" step="0.01" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="editDate" required>
+          </div>
+          <div class="form-group">
+            <label>Order Slip #</label>
+            <input type="text" id="editOs">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Remarks</label>
+          <input type="text" id="editNote">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payment History Modal -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content glass">
+      <h2>Payment History – <span id="historyName"></span></h2>
+      <div id="historyContent"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== RECEIPT (1/4 PAPER SIZE) ========== -->
+  <div id="receipt" class="receipt">
+    <div class="receipt-header">
+      <h2>OFFICIAL RECEIPT</h2>
+      <p>Employee Debt Payment</p>
+    </div>
+
+    <div class="receipt-body">
+      <div class="receipt-row">
+        <span>Date:</span>
+        <span id="receiptDate"></span>
+      </div>
+      <div class="receipt-row">
+        <span>Employee:</span>
+        <strong id="receiptName"></strong>
+      </div>
+      <div class="receipt-row">
+        <span>OS #:</span>
+        <span id="receiptOS"></span>
+      </div>
+      <hr>
+      <div class="receipt-row">
+        <span>Total Amount:</span>
+        <span id="receiptTotal"></span>
+      </div>
+      <div class="receipt-row">
+        <span>Amount Paid:</span>
+        <span id="receiptPaid"></span>
+      </div>
+      <div class="receipt-row highlight">
+        <span>Remaining Balance:</span>
+        <strong id="receiptBalance"></strong>
+      </div>
+      <div class="receipt-row">
+        <span>Status:</span>
+        <span id="receiptStatus"></span>
+      </div>
+      <div class="receipt-row">
+        <span>Remarks:</span>
+        <span id="receiptNote"></span>
+      </div>
+    </div>
+
+    <div class="receipt-footer">
+      <div class="signature">
+        <p>_________________________</p>
+        <p>Received by</p>
+      </div>
+      <div class="signature">
+        <p>_________________________</p>
+        <p>Authorized Signature</p>
+      </div>
+      <p class="thankyou">Thank you!</p>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+
+  <!-- Your Firebase config -->
+  <script src="firebase.js"></script>
+
+  <!-- Main App -->
+  <script src="script.js"></script>
+</body>
+</html>
